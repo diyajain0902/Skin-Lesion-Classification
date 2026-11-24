@@ -30,7 +30,7 @@ performance, and explainable** — with a thin Streamlit demo.
 All compute runs on **Kaggle Notebooks** (free GPU; HAM10000 is hosted there), so nothing large
 is installed locally.
 
-1. Push this repo to GitHub.
+1. Code lives at https://github.com/diyajain0902/Skin-Lesion-Classification (public).
 2. On Kaggle: New Notebook → File → Import Notebook → `notebooks/kaggle_runner.ipynb`.
 3. Settings: GPU on, Internet on, add dataset `kmader/skin-cancer-mnist-ham10000`
    (and a `GITHUB_TOKEN` secret if the repo is private).
