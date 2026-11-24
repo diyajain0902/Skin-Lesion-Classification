@@ -1,0 +1,9 @@
+# Paths used when running inside a Kaggle Notebook (auto-selected when /kaggle/input exists).
+# /kaggle/input is read-only (attached datasets); /kaggle/working is writable and is saved as
+# the notebook's output, which we download and commit (results/ only — small plain files).
+data_root: /kaggle/working/data
+ham10000_dir: /kaggle/input/skin-cancer-mnist-ham10000   # attach dataset kmader/skin-cancer-mnist-ham10000
+splits_dir: splits                # inside the repo: the fixed splits are committed so they never change
+checkpoints_dir: /kaggle/working/checkpoints
+results_dir: results              # inside the cloned repo; copied to output at the end of a run
+mlflow_uri: /kaggle/working/mlruns

@@ -1,0 +1,8 @@
+# All filesystem locations live here (rule 6: no hardcoded paths).
+# Relative paths are resolved against the project root.
+data_root: data                  # raw + processed datasets (git-ignored)
+ham10000_dir: data/ham10000
+splits_dir: splits               # lesion-level split CSVs, committed to git (fixed forever)
+checkpoints_dir: checkpoints
+results_dir: results
+mlflow_uri: mlruns               # local file store

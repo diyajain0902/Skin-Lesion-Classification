@@ -1,0 +1,20 @@
+# Shared defaults. Experiment configs override these keys.
+experiment_name: base
+
+seeds:
+  split_seed: 2024               # FIXED FOREVER: every experiment uses identical splits (rule 2)
+  train_seeds: [42, 43, 44]      # varied for multi-seed runs, reported as mean +/- std
+
+hardware:
+  device: auto                   # auto | cuda | cpu
+  amp: true                      # mixed precision, only active on CUDA
+  num_workers: auto              # auto -> min(4, cpu_count)
+  # Batch size per device type; 'auto' picks from these based on detected VRAM.
+  batch_size:
+    cpu: 8
+    gpu_small: 16                # <= 6 GB VRAM (e.g. RTX 3050 4 GB)
+    gpu_large: 64
+
+debug:
+  max_samples: 128               # subset size used by --debug
+  epochs: 1
