@@ -410,27 +410,37 @@ def prepare_data(cfg: dict, debug: bool = False) -> dict:
     This is the single entry point used by train/evaluate/etc., so every phase gets the same
     splits, the same train-only encoder and the same normalisation.
     """
-    classes = cfg["data"]["classes"]
     df = load_metadata(find_ham10000_dir(cfg))
     splits = get_or_create_splits(cfg, df)
     assert_no_lesion_overlap(splits)
     df = df.merge(splits[["image_id", "split"]], on="image_id", how="left")
     frames = {s: df[df["split"] == s].reset_index(drop=True) for s in SPLITS}
-    if debug:
-        n = cfg["debug"]["max_samples"]
-        frames = {s: debug_subset(f, n if s == "train" else n // 2, cfg["seeds"]["split_seed"])
-                  for s, f in frames.items()}
+    return build_from_frames(cfg, frames, debug)
 
-    encoder = MetadataEncoder().fit(frames["train"])  # TRAIN ONLY
+
+def build_from_frames(cfg: dict, frames: dict, debug: bool = False) -> dict:
+    """Fit train statistics on the FULL train split, then (optionally) subset for --debug.
+
+    Order matters: if the encoder were fitted on the debug subset, rare body sites missing from
+    the subset would drop one-hot columns, so debug and full runs would have different metadata
+    widths (a real bug caught in the first Kaggle run). Fitting first keeps them identical.
+    """
+    classes = cfg["data"]["classes"]
+    seed = cfg["seeds"]["split_seed"]
+    encoder = MetadataEncoder().fit(frames["train"])  # TRAIN ONLY, full split
+    weights = compute_class_weights(
+        frames["train"]["dx"].map({c: i for i, c in enumerate(classes)}).to_numpy(), len(classes))
     norm = None
     if cfg["data"]["normalization"] == "train":
-        norm = compute_train_norm_stats(frames["train"], cfg, cfg["seeds"]["split_seed"])
+        norm = compute_train_norm_stats(frames["train"], cfg, seed)
+    if debug:
+        n = cfg["debug"]["max_samples"]
+        frames = {s: debug_subset(f, n if s == "train" else n // 2, seed) for s, f in frames.items()}
     datasets = {
         s: HAM10000Dataset(f, encoder.transform(f), classes,
                            build_transforms(cfg, train=(s == "train"), norm=norm), cfg)
         for s, f in frames.items()
     }
-    weights = compute_class_weights(datasets["train"].labels, len(classes))
     return {"frames": frames, "datasets": datasets, "encoder": encoder,
             "class_weights": weights, "norm": norm or (IMAGENET_MEAN, IMAGENET_STD)}
 

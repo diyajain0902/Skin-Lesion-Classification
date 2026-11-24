@@ -8,6 +8,7 @@ import torch
 from src.data import (
     SPLITS,
     HAM10000Dataset,
+    build_from_frames,
     MetadataEncoder,
     assert_no_lesion_overlap,
     build_transforms,
@@ -180,3 +181,25 @@ def test_dataset_item(tmp_path, rgb_image):
     assert x.shape == (3, size, size)
     assert m.shape == (enc.n_features,) and m.dtype == torch.float32
     assert y == CLASSES.index("mel") and lid == "L1"
+
+
+def test_debug_subset_keeps_full_metadata_width(meta, splits):
+    """Regression: the encoder must be fit on the FULL train split, not the --debug subset.
+
+    First Kaggle run: a rare body site missing from the 128-image debug subset dropped a one-hot
+    column, so debug batches had 16 features instead of the full encoder's width.
+    """
+    cfg = load_config()
+    m = meta.merge(splits[["image_id", "split"]], on="image_id").assign(path="unused.jpg")
+    train_idx = m.index[m["split"] == "train"]
+    m.loc[train_idx[0], "localization"] = "rare_site"  # only one train image has it
+    frames = {s: m[m["split"] == s].reset_index(drop=True) for s in SPLITS}
+    full = build_from_frames(cfg, frames, debug=False)
+    dbg = build_from_frames(cfg, frames, debug=True)
+    width = full["encoder"].n_features
+    assert "loc_rare_site" in dbg["encoder"].feature_names
+    assert dbg["encoder"].n_features == width
+    for s in SPLITS:
+        assert dbg["datasets"][s].meta.shape[1] == width
+    assert len(dbg["datasets"]["train"]) <= cfg["debug"]["max_samples"] + len(CLASSES)
+    np.testing.assert_allclose(dbg["class_weights"], full["class_weights"])
