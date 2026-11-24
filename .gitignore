@@ -1,0 +1,33 @@
+# Data, checkpoints, tracking — large, reproducible from scripts
+data/*
+!data/README.md
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+mlruns/
+mlartifacts/
+optuna*.db
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Secrets
+kaggle.json
+.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Local Claude settings
+.claude/settings.local.json
