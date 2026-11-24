@@ -18,3 +18,28 @@ hardware:
 debug:
   max_samples: 128               # subset size used by --debug
   epochs: 1
+  phash_images: 600              # images hashed by `src.data --debug`
+
+data:
+  kaggle_dataset: kmader/skin-cancer-mnist-ham10000
+  # Fixed class order (alphabetical HAM10000 codes). Index 4 = melanoma.
+  classes: [akiec, bcc, bkl, df, mel, nv, vasc]
+  melanoma_class: mel
+  image_size: 224
+  split:
+    train: 0.70                  # fractions of LESIONS, not images (rule 1)
+    val: 0.15
+    test: 0.15
+    val_a_fraction: 0.5          # val -> val_a (selection/temperature/thresholds) + val_b (conformal)
+  augmentation: light            # light | heavy
+  normalization: imagenet        # imagenet | train (train = per-channel stats fit on train only)
+  norm_stats_images: 1000        # train images sampled to estimate 'train' normalisation
+  preprocessing:
+    color_constancy: false       # Shades of Gray
+    shades_of_gray_p: 6
+    hair_removal: false          # DullRazor-style
+  balanced_sampler: false        # class-balanced WeightedRandomSampler for train
+  phash:
+    hash_size: 8                 # 8x8 DCT -> 64-bit perceptual hash
+    max_distance: 4              # Hamming distance treated as a near-duplicate
+    report_thresholds: [0, 2, 4, 6, 8]

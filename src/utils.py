@@ -143,3 +143,37 @@ def auto_batch_size(cfg: dict) -> int:
 def auto_num_workers(cfg: dict) -> int:
     nw = cfg["hardware"].get("num_workers", "auto")
     return min(4, os.cpu_count() or 1) if nw == "auto" else int(nw)
+
+
+# --------------------------------------------------------------------------- tracking
+def results_dir_for(cfg: dict, experiment_name: str | None = None) -> Path:
+    """results/<experiment_name>/ — plain files that survive without MLflow (rule 10)."""
+    d = resolve_path(cfg["paths"]["results_dir"]) / (experiment_name or cfg["experiment_name"])
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def start_mlflow_run(cfg: dict, experiment_name: str, run_name: str | None = None):
+    """Start an MLflow run in the local file store configured in paths YAML.
+
+    Returns the active run; use as a context manager: `with start_mlflow_run(...):`.
+    """
+    import mlflow
+
+    uri_path = resolve_path(cfg["paths"]["mlflow_uri"])
+    uri_path.mkdir(parents=True, exist_ok=True)
+    mlflow.set_tracking_uri(uri_path.as_uri())
+    mlflow.set_experiment(experiment_name)
+    return mlflow.start_run(run_name=run_name)
+
+
+def flatten_dict(d: dict, prefix: str = "") -> dict[str, Any]:
+    """{'a': {'b': 1}} -> {'a.b': 1}; MLflow params must be flat."""
+    out: dict[str, Any] = {}
+    for k, v in d.items():
+        key = f"{prefix}{k}"
+        if isinstance(v, dict):
+            out.update(flatten_dict(v, key + "."))
+        else:
+            out[key] = v
+    return out
