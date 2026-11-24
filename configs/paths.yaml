@@ -5,4 +5,4 @@ ham10000_dir: data/ham10000
 splits_dir: splits               # lesion-level split CSVs, committed to git (fixed forever)
 checkpoints_dir: checkpoints
 results_dir: results
-mlflow_uri: mlruns               # local file store
+mlflow_uri: mlruns               # local MLflow store: mlruns/mlflow.db (SQLite) + mlruns/artifacts

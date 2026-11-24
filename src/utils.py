@@ -154,15 +154,23 @@ def results_dir_for(cfg: dict, experiment_name: str | None = None) -> Path:
 
 
 def start_mlflow_run(cfg: dict, experiment_name: str, run_name: str | None = None):
-    """Start an MLflow run in the local file store configured in paths YAML.
+    """Start an MLflow run stored locally under the `mlflow_uri` folder from the paths YAML.
 
+    Backend: a local SQLite file (<mlflow_uri>/mlflow.db) with artifacts in <mlflow_uri>/artifacts.
+    MLflow >= 3.x refuses the old plain-folder file store, and SQLite is its recommended local
+    replacement: still a single local file, no server. Browse with:
+        mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db
     Returns the active run; use as a context manager: `with start_mlflow_run(...):`.
     """
     import mlflow
 
-    uri_path = resolve_path(cfg["paths"]["mlflow_uri"])
-    uri_path.mkdir(parents=True, exist_ok=True)
-    mlflow.set_tracking_uri(uri_path.as_uri())
+    root = resolve_path(cfg["paths"]["mlflow_uri"])
+    root.mkdir(parents=True, exist_ok=True)
+    mlflow.set_tracking_uri(f"sqlite:///{(root / 'mlflow.db').as_posix()}")
+    if mlflow.get_experiment_by_name(experiment_name) is None:
+        # Explicit artifact location; otherwise MLflow writes ./mlartifacts in the current dir.
+        mlflow.create_experiment(experiment_name,
+                                 artifact_location=(root / "artifacts" / experiment_name).as_uri())
     mlflow.set_experiment(experiment_name)
     return mlflow.start_run(run_name=run_name)
 

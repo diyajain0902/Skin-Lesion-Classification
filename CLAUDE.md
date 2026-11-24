@@ -12,7 +12,8 @@ comments on key design decisions.
 ## Stack
 PyTorch, timm, open_clip, segmentation_models_pytorch, albumentations, scikit-learn,
 scipy/statsmodels, pandas, matplotlib/seaborn, pytorch-grad-cam, MAPIE or hand-written conformal,
-Optuna, MLflow (local file store `mlruns/`), Streamlit, PyYAML, Kaggle API.
+Optuna, MLflow (local SQLite store `mlruns/mlflow.db`; MLflow 3 refuses the plain file store),
+Streamlit, PyYAML, Kaggle API.
 
 ## Non-negotiable rules
 1. **Split by `lesion_id`, never by image.** Train/val/test = 70/15/15, stratified by class.

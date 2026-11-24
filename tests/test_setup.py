@@ -54,3 +54,23 @@ def test_paths_config_env_override(monkeypatch):
     monkeypatch.setenv("SKIN_PATHS_CONFIG", "configs/paths_kaggle.yaml")
     assert paths_config_file().name == "paths_kaggle.yaml"
     assert load_config()["paths"]["ham10000_dir"].startswith("/kaggle/input")
+
+
+def test_mlflow_run_logs_to_local_store(tmp_path):
+    """Creates a real MLflow run (catches MLflow backend breakages before a Kaggle run does)."""
+    import mlflow
+
+    from src.utils import start_mlflow_run
+
+    cfg = load_config()
+    cfg["paths"]["mlflow_uri"] = str(tmp_path / "mlruns")
+    artifact = tmp_path / "note.txt"
+    artifact.write_text("hello")
+    with start_mlflow_run(cfg, "pytest_experiment", run_name="t") as run:
+        mlflow.log_param("p", 1)
+        mlflow.log_metric("m", 0.5)
+        mlflow.log_artifact(str(artifact))
+    stored = mlflow.get_run(run.info.run_id)
+    assert stored.data.params["p"] == "1" and stored.data.metrics["m"] == 0.5
+    assert (tmp_path / "mlruns" / "mlflow.db").exists()
+    assert list((tmp_path / "mlruns" / "artifacts").rglob("note.txt"))
